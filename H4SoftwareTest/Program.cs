@@ -2,6 +2,7 @@ using H4SoftwareTest.Codes;
 using H4SoftwareTest.Components;
 using H4SoftwareTest.Components.Account;
 using H4SoftwareTest.Data;
+using H4SoftwareTest.Models.Context;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -29,12 +30,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+var toDoConnectionString = builder.Configuration.GetConnectionString("TodoConnection") ?? throw new InvalidOperationException("Connection string 'TodoConnection' not found.");
+builder.Services.AddDbContext<TodoContext>(options =>
+    options.UseSqlServer(toDoConnectionString));
 
-/* Køre db migration med cli: Add-Migration [Name Of Migration] -context [Name Of Context Class] og
- bagefter køre: Update-Database -context [NameOfContextClass]*/
-//var connectionString = builder.Configuration.GetConnectionString("MockConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//    options.UseSqlite(connectionString));
 
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -64,6 +63,8 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddSingleton<RoleHandler>();
 
+builder.Services.AddSingleton<EncryptionHandler>();
+
 builder.Services.Configure<IdentityOptions>(options =>
 {
     // Default Password settings.
@@ -71,14 +72,30 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireLowercase = true;
     options.Password.RequireNonAlphanumeric = true;
     options.Password.RequireUppercase = true;
-    options.Password.RequiredLength = 6;
+    options.Password.RequiredLength = 8;
     options.Password.RequiredUniqueChars = 1;
 });
 
-builder.Services.AddSingleton<HashingHandler>();
-builder.Services.AddSingleton<EncryptionHandler>();
+string useFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+useFolder = Path.Combine(useFolder, ".aspnet", "https", "H4Cert.pfx");
+
+string kestrelPassword = builder.Configuration.GetValue<string>("KestrelPassword");
+
+builder.Configuration.GetSection("Kestrel:Endpoints:Https:Certificate:Path").Value = useFolder;
+builder.Configuration.GetSection("Kestrel:Endpoints:Https:Certificate:Password").Value = kestrelPassword;
+
+builder.WebHost.UseKestrel((context, serverOptions) => 
+{
+    serverOptions.Configure(context.Configuration.GetSection("Kestrel"))
+    .Endpoint("HTTPS", listenOptions =>
+    {
+        listenOptions.HttpsOptions.SslProtocols = System.Security.Authentication.SslProtocols.Tls12;
+    });
+});
+
 
 builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

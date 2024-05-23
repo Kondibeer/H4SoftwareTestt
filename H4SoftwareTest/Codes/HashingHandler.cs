@@ -4,90 +4,74 @@ using System.Text;
 
 namespace H4SoftwareTest.Codes;
 
-public class HashingHandler
+public static class HashingHandler
 {
-    public dynamic MD5Hashing(string txtToHash, string returnType)
+    public static string MD5Hashing(string txtToHash)
     {
         MD5 md5 = MD5.Create();
+
         byte[] txtToHashAsByteArray = Encoding.ASCII.GetBytes(txtToHash);
         byte[] hashedValue = md5.ComputeHash(txtToHashAsByteArray);
 
-        if (returnType == "string")
-        {
-            string hashedValueAsString = Convert.ToBase64String(hashedValue);
-            return hashedValueAsString;
-        }
-        else if (returnType == "byteArray")
-        {
-            return hashedValue;
-        }
-        else
-            return null;
+        
+        return Convert.ToBase64String(hashedValue);
     }
 
-    public string SHA2Hashing(string txtToHash)
+    public static string SHA2Hashing(string txtToHash)
     {
         SHA256 sha256 = SHA256.Create();
+
         byte[] txtToHashAsByteArray = Encoding.ASCII.GetBytes(txtToHash);
         byte[] hashedValue = sha256.ComputeHash(txtToHashAsByteArray);
 
-        string hashedValueAsString = Convert.ToBase64String(hashedValue);
-        return hashedValueAsString;
+        return Convert.ToBase64String(hashedValue);
+        
     }
 
-    public string HMACHashing(string txtToHash)
+    public static string HMACHashing(string txtToHash)
     {
-        byte[] myKey = Encoding.ASCII.GetBytes("NielsErMinFavoritLære");
+        byte[] myKey = Encoding.ASCII.GetBytes(txtToHash);
+
         byte[] txtToHashAsByteArray = Encoding.ASCII.GetBytes(txtToHash);
 
         HMACSHA256 hmac = new HMACSHA256();
         hmac.Key = myKey;
 
         byte[] hashedValue = hmac.ComputeHash(txtToHashAsByteArray);
-        string hashedValueAsString = Convert.ToBase64String(hashedValue);
-        return hashedValueAsString;
+        return Convert.ToBase64String(hashedValue);
     }
 
-    public string PBKDF2Hashing(string txtToHash)
+    public static string PBKDF2Hashing(string txtToHash)
     {
-        byte[] salt = Encoding.ASCII.GetBytes("NielsErMinFavoritLære");
+        byte[] salt = Encoding.ASCII.GetBytes(txtToHash);
         byte[] txtToHashAsByteArray = Encoding.ASCII.GetBytes(txtToHash);
         var hashAlgo = new HashAlgorithmName("SHA256");
         int itirationer = 10;
         int outputLength = 32;
 
         byte[] hashedValue = Rfc2898DeriveBytes.Pbkdf2(txtToHashAsByteArray, salt, itirationer, hashAlgo, outputLength);
-        string hashedValueAsString = Convert.ToBase64String(hashedValue);
-        return hashedValueAsString;
+
+        return Convert.ToBase64String(hashedValue);
+        
     }
 
-    public string BCryptHashing(string txtToHash)
+    public static string BCryptHashing(string txtToHash)
     {
-        //Eks. 1
-        //return BCrypt.Net.BCrypt.HashPassword(txtToHash);
-
-        //Eks. 2
-        //int workFactor = 10;
-        //bool enhancedEntropi = true;
-        //return BCrypt.Net.BCrypt.HashPassword(txtToHash, workFactor, enhancedEntropi);
-
-        //Eks. 3
+       
         string salt = BCrypt.Net.BCrypt.GenerateSalt();
-        bool enhancedEntropi = true;
+        bool enhancedEntropy = true;
         HashType hashType = HashType.SHA256;
-        return BCrypt.Net.BCrypt.HashPassword(txtToHash, salt, enhancedEntropi, hashType);
+        return BCrypt.Net.BCrypt.HashPassword(txtToHash, salt, enhancedEntropy, hashType);
 
     }
 
-    public bool BCryptHashingVerify(string txtToHash, string hashedValueAsString)
+    public static bool BCryptHashingVerify(string txtToHash, string hashedValueAsString)
     {
-        //Eks. 1
-        //return BCrypt.Net.BCrypt.Verify(txtToHash, hashedValueAsString);
 
-        //Eks. 2
-        //return BCrypt.Net.BCrypt.Verify(txtToHash, hashedValueAsString, true);
+        bool enhanceEntropy = true;
 
-        //Eks. 3
+        HashType hashType = HashType.SHA256;
+
         return BCrypt.Net.BCrypt.Verify(txtToHash, hashedValueAsString, true, HashType.SHA256);
     }
 }

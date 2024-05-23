@@ -1,0 +1,6 @@
+@H4ServersideAPI_HostAddress = http://localhost:5096
+
+GET {{H4ServersideAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
